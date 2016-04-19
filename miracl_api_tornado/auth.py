@@ -3,15 +3,12 @@ from __future__ import absolute_import, division, print_function, \
 import os
 from abc import ABCMeta, abstractmethod
 
-import functools
-
 import tornado
 import tornado.web
 from tornado import escape
 from tornado import gen
-from tornado.auth import OAuth2Mixin, _auth_return_future, AuthError
+from tornado.auth import OAuth2Mixin, AuthError
 import base64
-
 
 try:
     import urllib.parse as urllib_parse  # py3
@@ -21,22 +18,35 @@ except ImportError:
 MIRACL_COOKIE_TOKEN_KEY = 'miracl_token'
 
 
-class MiraclMixin(tornado.web.RequestHandler, OAuth2Mixin):
+class MiraclMixin(OAuth2Mixin):
     __metaclass__ = ABCMeta
     _OAUTH_AUTHORIZE_URL = 'https://m-pin.my.id/abstractlogin'
     _OAUTH_ACCESS_TOKEN_URL = 'https://m-pin.my.id/c2id/token'
     _OAUTH_USERINFO_URL = 'https://m-pin.my.id/c2id/userinfo'
     _OAUTH_SETTINGS_KEY = 'miracl'
 
-    @tornado.gen.coroutine
-    def get(self):
-        if self.get_argument('code', False):
-            state = self.get_secure_cookie('miracl_state')
-            current_state = self.get_argument('state')
-            if current_state and state != current_state:
-                self.on_auth_failed()
-                return
-            access = yield self.get_authenticated_user(
+    _MIRACL_STATE_COOKIE = 'miracl_state'
+
+    def perform_login_redirect(self):
+        state = self._gen_state()
+        self.set_secure_cookie(self._MIRACL_STATE_COOKIE, state)
+        self.authorize_redirect(
+            redirect_uri=self.settings[self._OAUTH_SETTINGS_KEY][
+                'redirect_uri'],
+            client_id=self.settings[self._OAUTH_SETTINGS_KEY][
+                'client_id'],
+            scope=['openid', 'profile', 'email'],
+            response_type='code',
+            extra_params={'approval_prompt': 'auto', 'state': state})
+
+    @gen.coroutine
+    def perform_access_token_request(self):
+        state = self.get_secure_cookie(self._MIRACL_STATE_COOKIE)
+        current_state = self.get_argument('state')
+        if current_state and state != current_state:
+            self.on_auth_failed()
+        else:
+            access = yield self._get_authenticated_user(
                 redirect_uri=self.settings[self._OAUTH_SETTINGS_KEY][
                     'redirect_uri'],
                 code=self.get_argument('code'))
@@ -46,25 +56,9 @@ class MiraclMixin(tornado.web.RequestHandler, OAuth2Mixin):
                 self._OAUTH_USERINFO_URL,
                 access_token=access['access_token'])
             self.on_auth_success(data)
-        else:
-            try:
-                self.get_argument('login')
-                state = self._gen_state()
-                self.set_secure_cookie('miracl_state', state)
-                yield self.authorize_redirect(
-                    redirect_uri=self.settings[self._OAUTH_SETTINGS_KEY][
-                        'redirect_uri'],
-                    client_id=self.settings[self._OAUTH_SETTINGS_KEY][
-                        'client_id'],
-                    scope=['openid', 'profile', 'email'],
-                    response_type='code',
-                    extra_params={'approval_prompt': 'auto', 'state': state})
-            except tornado.web.MissingArgumentError:
-                logout(self)
-                self.on_auth_failed()
 
-    @_auth_return_future
-    def get_authenticated_user(self, redirect_uri, code, callback):
+    @gen.coroutine
+    def _get_authenticated_user(self, redirect_uri, code):
         http = self.get_auth_http_client()
         body = urllib_parse.urlencode({
             'redirect_uri': redirect_uri,
@@ -74,23 +68,17 @@ class MiraclMixin(tornado.web.RequestHandler, OAuth2Mixin):
             'grant_type': 'authorization_code',
         })
 
-        http.fetch(self._OAUTH_ACCESS_TOKEN_URL,
-                   functools.partial(self._on_access_token, callback),
-                   method='POST',
-                   headers={
-                       'Content-Type': 'application/x-www-form-urlencoded'},
-                   body=body)
+        response = yield http.fetch(
+            self._OAUTH_ACCESS_TOKEN_URL,
+            method='POST',
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            body=body)
 
-    def get_user_details(self):
-        token = self.get_secure_cookie(MIRACL_COOKIE_TOKEN_KEY)
-
-    def _on_access_token(self, future, response):
         if response.error:
-            future.set_exception(
-                AuthError('Miracl auth error: %s' % str(response)))
-            return
-        args = escape.json_decode(response.body)
-        future.set_result(args)
+            raise AuthError('Miracl auth error: %s' % str(response))
+        else:
+            args = escape.json_decode(response.body)
+            raise gen.Return(args)
 
     @staticmethod
     def _gen_state():
@@ -111,6 +99,22 @@ class MiraclMixin(tornado.web.RequestHandler, OAuth2Mixin):
     @abstractmethod
     def on_auth_failed(self):
         pass
+
+
+class MiraclAuthRequestHandler(tornado.web.RequestHandler, MiraclMixin):
+    __metaclass__ = ABCMeta
+
+    @gen.coroutine
+    def get(self):
+        if self.get_argument('code', False):
+            yield self.perform_access_token_request()
+        else:
+            try:
+                self.get_argument('login')
+                self.perform_login_redirect()
+            except tornado.web.MissingArgumentError:
+                logout(self)
+                self.on_auth_failed()
 
 
 def is_authenticated(handler):

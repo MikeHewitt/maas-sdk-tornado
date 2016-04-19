@@ -2,7 +2,7 @@ import miracl_api_tornado as auth
 from tornado import web, ioloop
 
 
-class AuthHandler(auth.MiraclMixin):
+class AuthHandler(auth.MiraclAuthRequestHandler):
     def on_auth_success(self, user_data):
         self.set_secure_cookie("e-mail", user_data['sub'])
         self.redirect("/")
