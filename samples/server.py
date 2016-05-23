@@ -31,12 +31,13 @@ def render_template(handler, **kwargs):
 
 class AuthHandler(auth.MiraclAuthRequestHandler):
     def on_auth_success(self, user_data):
-        self.set_secure_cookie("e-mail", user_data['sub'])
-        flash_message(self, "info", "User login successful")
+        self.set_secure_cookie("sub", user_data['sub'])
+        self.set_secure_cookie("email", user_data['email'])
+        flash_message(self, "success", "Successfully logged in!")
         self.redirect("/")
 
     def on_auth_failed(self):
-        flash_message(self, "warn", "Login failed!")
+        flash_message(self, "danger", "Login failed!")
         render_template(self, retry=True, auth_url=auth.get_login_url(self))
 
 
@@ -44,8 +45,8 @@ class MainHandler(web.RequestHandler):
     def get(self):
         if auth.is_authenticated(self):
             render_template(self, is_authorized=True,
-                            email=self.get_secure_cookie("e-mail"),
-                            user_id=self.get_secure_cookie("e-mail"))
+                            email=self.get_secure_cookie("email"),
+                            user_id=self.get_secure_cookie("sub"))
         else:
             render_template(self, auth_url=auth.get_login_url(self))
 
