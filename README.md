@@ -68,6 +68,11 @@ There are some helper methods that can be called from any RequestHandler:
 
 `logout` clears token from cookie.
 
+`refresh_user_data` clears user info and re-retrieves it from server. It can
+change authentification state if access token is expired. This is coroutine.
+
+`get_user_id` and `get_email` returns cached user information.
+
 `get_login_url` generates authentificatin URL for `mpin.js`
 
 ## Samples

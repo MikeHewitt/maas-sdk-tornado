@@ -3,12 +3,10 @@ from __future__ import absolute_import, division, print_function, \
 
 import base64
 import functools
-
 import os
 import tornado.web
 from abc import ABCMeta, abstractmethod
-from tornado import escape
-from tornado import gen
+from tornado import escape, gen, httpclient
 from tornado.auth import OAuth2Mixin, AuthError
 from tornado.httputil import url_concat
 from .tornado_overrides import auth_return_future
@@ -19,6 +17,7 @@ except ImportError:
     import urllib as urllib_parse  # py2
 
 MIRACL_COOKIE_TOKEN_KEY = 'miracl_token'
+MIRACL_COOKIE_USERDATA_KEY = 'miracl_userdata'
 MIRACL_STATE_COOKIE = 'miracl_state'
 OAUTH_SETTINGS_KEY = 'miracl'
 
@@ -49,12 +48,8 @@ class MiraclMixin(OAuth2Mixin):
                 code=self.get_argument('code'))
             self.set_secure_cookie(MIRACL_COOKIE_TOKEN_KEY,
                                    access['access_token'])
-            data = yield self.oauth2_request(
-                self._OAUTH_USERINFO_URL,
-                access_token=access['access_token'])
-            if "email" not in data:
-                data["email"] = ""
-            self.on_auth_success(data)
+            yield refresh_user_data(self, access_token=access['access_token'])
+            self.on_auth_success(access['access_token'])
 
     @gen.coroutine
     def _get_authenticated_user(self, redirect_uri, code):
@@ -79,39 +74,8 @@ class MiraclMixin(OAuth2Mixin):
             args = escape.json_decode(response.body)
             raise gen.Return(args)
 
-    @auth_return_future
-    def oauth2_request(self, url, callback, access_token=None,
-                       post_args=None, **args):
-        all_args = {}
-        all_args.update(args)
-        print(access_token)
-        if all_args:
-            url += "?" + urllib_parse.urlencode(all_args)
-        callback = functools.partial(self._on_oauth2_request, callback)
-        http = self.get_auth_http_client()
-        if post_args is not None:
-            http.fetch(url, method="POST",
-                       body=urllib_parse.urlencode(post_args),
-                       callback=callback,
-                       headers={"Authorization": "Bearer " + access_token}
-                       )
-        else:
-            http.fetch(url,
-                       callback=callback,
-                       headers={"Authorization": "Bearer " + access_token}
-                       )
-
-    def _on_oauth2_request(self, future, response):
-        if response.error:
-            future.set_exception(AuthError("Error response %s fetching %s" %
-                                           (response.error,
-                                            response.request.url)))
-            return
-
-        future.set_result(escape.json_decode(response.body))
-
     @abstractmethod
-    def on_auth_success(self, user_data):
+    def on_auth_success(self, token):
         pass
 
     @abstractmethod
@@ -162,5 +126,69 @@ def is_authenticated(handler):
     return token is not None
 
 
+@gen.coroutine
+def refresh_user_data(handler, access_token=None):
+    handler.clear_cookie(MIRACL_COOKIE_USERDATA_KEY)
+    data = yield _oauth2_request(handler, OAUTH_USERINFO_URL,
+                                 access_token=access_token)
+    if data is not None:
+        handler.set_secure_cookie(MIRACL_COOKIE_USERDATA_KEY,
+                                  escape.json_encode(data))
+    else:
+        logout(handler)
+
+
 def logout(handler):
     handler.clear_cookie(MIRACL_COOKIE_TOKEN_KEY)
+    handler.clear_cookie(MIRACL_COOKIE_USERDATA_KEY)
+
+
+def _get_userdata(handler):
+    data = escape.json_decode(
+        handler.get_secure_cookie(MIRACL_COOKIE_USERDATA_KEY))
+    return data
+
+
+def get_user_id(handler):
+    data = _get_userdata(handler)
+    return data["sub"]
+
+
+def get_email(handler):
+    data = _get_userdata(handler)
+    if "email" not in data:
+        return ""
+    return data["email"]
+
+
+@auth_return_future
+def _oauth2_request(handler, url, callback, access_token=None,
+                    post_args=None, **args):
+    if access_token is None:
+        access_token = handler.get_secure_cookie(MIRACL_COOKIE_TOKEN_KEY)
+    all_args = {}
+    all_args.update(args)
+    if all_args:
+        url += "?" + urllib_parse.urlencode(all_args)
+    callback = functools.partial(_on_oauth2_request, callback)
+    http = httpclient.AsyncHTTPClient()
+    if post_args is not None:
+        http.fetch(url, method="POST",
+                   body=urllib_parse.urlencode(post_args),
+                   callback=callback,
+                   headers={"Authorization": "Bearer " + access_token}
+                   )
+    else:
+        http.fetch(url,
+                   callback=callback,
+                   headers={"Authorization": "Bearer " + access_token}
+                   )
+
+
+def _on_oauth2_request(future, response):
+    if response.error:
+        future.set_exception(AuthError("Error response %s fetching %s" %
+                                       (response.error,
+                                        response.request.url)))
+        future.set_result(None)
+    future.set_result(escape.json_decode(response.body))

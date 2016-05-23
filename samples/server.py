@@ -1,5 +1,5 @@
 import miracl_api_tornado as auth
-from tornado import web, ioloop
+from tornado import web, ioloop, gen
 import json
 
 
@@ -31,8 +31,6 @@ def render_template(handler, **kwargs):
 
 class AuthHandler(auth.MiraclAuthRequestHandler):
     def on_auth_success(self, user_data):
-        self.set_secure_cookie("sub", user_data['sub'])
-        self.set_secure_cookie("email", user_data['email'])
         flash_message(self, "success", "Successfully logged in!")
         self.redirect("/")
 
@@ -44,9 +42,11 @@ class AuthHandler(auth.MiraclAuthRequestHandler):
 class MainHandler(web.RequestHandler):
     def get(self):
         if auth.is_authenticated(self):
+            email = auth.get_email(self)
+            user_id = auth.get_user_id(self)
             render_template(self, is_authorized=True,
-                            email=self.get_secure_cookie("email"),
-                            user_id=self.get_secure_cookie("sub"))
+                            email=email,
+                            user_id=user_id)
         else:
             render_template(self, auth_url=auth.get_login_url(self))
 
@@ -54,7 +54,14 @@ class MainHandler(web.RequestHandler):
 class LogoutHandler(web.RequestHandler):
     def get(self):
         auth.logout(self)
-        flash_message(self, "info", "User logged out")
+        flash_message(self, "info", "User logged out!")
+        self.redirect("/")
+
+
+class RefreshHandler(web.RequestHandler):
+    @gen.coroutine
+    def get(self):
+        yield auth.refresh_user_data(self)
         self.redirect("/")
 
 
@@ -72,7 +79,8 @@ if __name__ == "__main__":
     app = web.Application([
         (r"/", MainHandler),
         (r"/c2id", AuthHandler),
-        (r"/logout", LogoutHandler)
+        (r"/logout", LogoutHandler),
+        (r"/refresh", RefreshHandler)
     ],
         **settings
     )
