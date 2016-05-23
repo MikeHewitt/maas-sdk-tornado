@@ -52,6 +52,8 @@ class MiraclMixin(OAuth2Mixin):
             data = yield self.oauth2_request(
                 self._OAUTH_USERINFO_URL,
                 access_token=access['access_token'])
+            if "email" not in data:
+                data["email"] = ""
             self.on_auth_success(data)
 
     @gen.coroutine
