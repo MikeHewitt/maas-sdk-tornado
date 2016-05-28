@@ -12,4 +12,9 @@ setup(name='miracl_api_tornado',
           'tornado',
           'future'  # https://github.com/rohe/pyoidc/issues/188
       ],
+      tests_require=[
+            'mock==2.0.0',
+            'tornado-stub-client==0.2'
+      ],
+      test_suite='tests.test_suite',
       zip_safe=False)
