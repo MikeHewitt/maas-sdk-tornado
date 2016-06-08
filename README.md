@@ -23,6 +23,19 @@ For Ubuntu 14.04 dependencies are:
 
 ## Structure
 
+### Frontend
+
+Authorization flow depends on `mpad.js` browser library. To show login button:
+
+* Put div with distinct ID where login button should be
+* Create authorization URL by using `get_login_url(handler)` server side
+* At the end of page body load `mpad.js` with parameters `x-authurl`
+(authorization URL) and `x-element` (login button ID)
+
+```
+<script src="https://demo.dev.miracl.net/mpin/mpad.js" x-authurl="{{ auth_url }}" x-element="btmpin"></script>
+```
+
 ### MiraclMixin
 
 Contains all logic for authentication flow. Mixin uses `RequestHandler`
@@ -53,8 +66,8 @@ All settings are required for `MiraclMixin` to work correctly.
 Inherits `MiraclMixin` and is default implementation of `RequestHandler` for
 authentification flow. It calls `perform_login_redirect` method internally.
 To start authentication flow, get authentication URL by using
-`get_login_url(handler)`. Returned URL should be used with `mpin.js` login
-function `mpin.login({authURL: "< auth-url >"})`. After user interaction
+`get_login_url(handler)`. Returned URL should be used with `mpad.js` (see
+[Frontend](#markdown-header-frontend)). After user interaction
 method `on_auth_success` or `on_auth_failed` will be called.
 
 See settings, `on_auth_success` and `on_auth_failed` description of
@@ -73,7 +86,7 @@ change authentification state if access token is expired. This is coroutine.
 
 `get_user_id` and `get_email` returns cached user information.
 
-`get_login_url` generates authentificatin URL for `mpin.js`
+`get_login_url` generates authorization URL for `mpad.js`
 
 ## Samples
 

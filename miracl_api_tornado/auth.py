@@ -21,7 +21,7 @@ MIRACL_COOKIE_USERDATA_KEY = 'miracl_userdata'
 MIRACL_STATE_COOKIE = 'miracl_state'
 OAUTH_SETTINGS_KEY = 'miracl'
 
-OAUTH_BASE_URL = 'http://mpinaas-demo.miracl.net:8001/'
+OAUTH_BASE_URL = 'https://api.dev.miracl.net/'
 # TODO: read values from .well-known/openid-configuration
 OAUTH_AUTHORIZE_URL = OAUTH_BASE_URL + 'authorize'
 OAUTH_ACCESS_TOKEN_URL = OAUTH_BASE_URL + 'oidc/token'
