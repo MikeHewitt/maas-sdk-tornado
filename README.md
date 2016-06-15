@@ -29,11 +29,11 @@ Authorization flow depends on `mpad.js` browser library. To show login button:
 
 * Put div with distinct ID where login button should be
 * Create authorization URL by using `get_login_url(handler)` server side
-* At the end of page body load `mpad.js` with parameters `x-authurl`
-(authorization URL) and `x-element` (login button ID)
+* At the end of page body load `mpad.js` with parameters `data-authurl`
+(authorization URL) and `data-element` (login button ID)
 
 ```
-<script src="https://demo.dev.miracl.net/mpin/mpad.js" x-authurl="{{ auth_url }}" x-element="btmpin"></script>
+<script src="https://demo.dev.miracl.net/mpin/mpad.js" data-authurl="{{ auth_url }}" data-element="btmpin"></script>
 ```
 
 ### MiraclMixin
