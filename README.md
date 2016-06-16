@@ -88,6 +88,9 @@ change authentification state if access token is expired. This is coroutine.
 
 `get_login_url` generates authorization URL for `mpad.js`
 
+`set_issuer` sets issuer URL. It needs to be called before constructing
+handlers.
+
 ## Samples
 
 Replace `CLIENT_ID`, `CLIENT_SECRET` and `REDIRECT_URI` with valid data from

@@ -28,6 +28,15 @@ OAUTH_ACCESS_TOKEN_URL = OAUTH_BASE_URL + 'oidc/token'
 OAUTH_USERINFO_URL = OAUTH_BASE_URL + 'oidc/userinfo'
 
 
+def set_issuer(issuer):
+    global OAUTH_BASE_URL
+    global OAUTH_AUTHORIZE_URL, OAUTH_ACCESS_TOKEN_URL, OAUTH_USERINFO_URL
+    OAUTH_BASE_URL = issuer
+    OAUTH_AUTHORIZE_URL = OAUTH_BASE_URL + 'authorize'
+    OAUTH_ACCESS_TOKEN_URL = OAUTH_BASE_URL + 'oidc/token'
+    OAUTH_USERINFO_URL = OAUTH_BASE_URL + 'oidc/userinfo'
+
+
 class MiraclMixin(OAuth2Mixin):
     __metaclass__ = ABCMeta
 
