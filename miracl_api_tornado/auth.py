@@ -196,8 +196,5 @@ def _oauth2_request(handler, url, callback, access_token=None,
 
 def _on_oauth2_request(future, response):
     if response.error:
-        future.set_exception(AuthError("Error response %s fetching %s" %
-                                       (response.error,
-                                        response.request.url)))
         future.set_result(None)
     future.set_result(escape.json_decode(response.body))
