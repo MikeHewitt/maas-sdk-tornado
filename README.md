@@ -93,5 +93,9 @@ handlers.
 
 ## Samples
 
+Configuration is located in `miracl.json`.
+
 Replace `CLIENT_ID`, `CLIENT_SECRET` and `REDIRECT_URI` with valid data from
-https://m-pin.my.id/protected . Samples can be run after setup step is done.
+Miracl. Samples can be run after setup step is done.
+
+Redirect URI for this sample is `http://127.0.0.1:5000/c2id` if run locally.

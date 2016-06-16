@@ -3,6 +3,13 @@ from tornado import web, ioloop, gen
 import json
 
 
+def read_configuration():
+    config_file = open("miracl.json")
+    config = json.load(config_file)
+    config_file.close()
+    return config
+
+
 def flash_message(handler, category, message):
     messages_json = handler.get_secure_cookie("messages")
     if not messages_json:
@@ -70,11 +77,7 @@ if __name__ == "__main__":
         'cookie_secret': 'secret',
         'xsrf_cookies': True,
         'debug': True,
-        'miracl': {
-            'client_id': 'CLIENT_ID',
-            'secret': 'CLIENT_SECRET',
-            'redirect_uri': 'REDIRECT_URL',
-        }
+        'miracl': read_configuration()
     }
     app = web.Application([
         (r"/", MainHandler),
