@@ -10,6 +10,7 @@ from tornado import escape, gen, httpclient
 from tornado.auth import OAuth2Mixin, AuthError
 from tornado.httputil import url_concat
 from .tornado_overrides import auth_return_future
+from .config import config
 
 try:
     import urllib.parse as urllib_parse  # py3
@@ -21,7 +22,7 @@ MIRACL_COOKIE_USERDATA_KEY = 'miracl_userdata'
 MIRACL_STATE_COOKIE = 'miracl_state'
 OAUTH_SETTINGS_KEY = 'miracl'
 
-OAUTH_BASE_URL = 'https://api.dev.miracl.net/'
+OAUTH_BASE_URL = config["OAUTH_BASE_URL"]
 # TODO: read values from .well-known/openid-configuration
 OAUTH_AUTHORIZE_URL = OAUTH_BASE_URL + 'authorize'
 OAUTH_ACCESS_TOKEN_URL = OAUTH_BASE_URL + 'oidc/token'
