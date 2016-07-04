@@ -9,7 +9,7 @@ setup(name='miracl_api_tornado',
       license='TBD',
       packages=['miracl_api_tornado'],
       install_requires=[
-          'tornado',
+          'tornado>=4.3',
           'future'  # https://github.com/rohe/pyoidc/issues/188
       ],
       tests_require=[
