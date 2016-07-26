@@ -11,6 +11,7 @@ from tornado.auth import OAuth2Mixin, AuthError
 from tornado.httputil import url_concat
 from .tornado_overrides import auth_return_future
 from .config import config
+from .messages import *
 
 try:
     import urllib.parse as urllib_parse  # py3
@@ -79,7 +80,7 @@ class MiraclMixin(OAuth2Mixin):
             body=body)
 
         if response.error:
-            raise AuthError('Miracl auth error: %s' % str(response))
+            raise AuthError(MIRACL_MSG_AUTH_ERROR % str(response))
         else:
             args = escape.json_decode(response.body)
             raise gen.Return(args)
