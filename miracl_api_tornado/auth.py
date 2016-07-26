@@ -23,20 +23,25 @@ MIRACL_COOKIE_USERDATA_KEY = 'miracl_userdata'
 MIRACL_STATE_COOKIE = 'miracl_state'
 OAUTH_SETTINGS_KEY = 'miracl'
 
-OAUTH_BASE_URL = config["OAUTH_BASE_URL"]
-# TODO: read values from .well-known/openid-configuration
-OAUTH_AUTHORIZE_URL = OAUTH_BASE_URL + 'authorize'
-OAUTH_ACCESS_TOKEN_URL = OAUTH_BASE_URL + 'oidc/token'
-OAUTH_USERINFO_URL = OAUTH_BASE_URL + 'oidc/userinfo'
+OAUTH_BASE_URL = ""
+OAUTH_AUTHORIZE_URL = ""
+OAUTH_ACCESS_TOKEN_URL = ""
+OAUTH_USERINFO_URL = ""
 
 
 def set_issuer(issuer):
     global OAUTH_BASE_URL
     global OAUTH_AUTHORIZE_URL, OAUTH_ACCESS_TOKEN_URL, OAUTH_USERINFO_URL
     OAUTH_BASE_URL = issuer
+    if not OAUTH_BASE_URL.endswith("/"):
+        OAUTH_BASE_URL += "/"
+
+    # TODO: read values from .well-known/openid-configuration
     OAUTH_AUTHORIZE_URL = OAUTH_BASE_URL + 'authorize'
     OAUTH_ACCESS_TOKEN_URL = OAUTH_BASE_URL + 'oidc/token'
     OAUTH_USERINFO_URL = OAUTH_BASE_URL + 'oidc/userinfo'
+
+set_issuer(config["OAUTH_BASE_URL"])
 
 
 class MiraclMixin(OAuth2Mixin):
