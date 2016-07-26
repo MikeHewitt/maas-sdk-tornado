@@ -33,7 +33,7 @@ Authorization flow depends on `mpad.js` browser library. To show login button:
 (authorization URL) and `data-element` (login button ID)
 
 ```
-<script src="https://demo.dev.miracl.net/mpin/mpad.js" data-authurl="{{ auth_url }}" data-element="btmpin"></script>
+<script src="https://dd.cdn.mpin.io/mpad/mpad.js" data-authurl="{{ auth_url }}" data-element="btmpin"></script>
 ```
 
 ### MiraclMixin
