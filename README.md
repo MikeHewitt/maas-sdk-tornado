@@ -1,9 +1,9 @@
 # Setup
 
-Use `python setup.py` for setup. It uses python-setuptools.
+Run `python setup.py` for setup. It uses python-setuptools.
 
 Some dependencies require additional system packages to be installed.
-For Ubuntu 14.04 dependencies are:
+For Ubuntu 14.04 the dependencies are:
 
 * `build-essential` (for compiling code in dependencies)
 * `python-dev` or `python3-dev` (depending on python version used)
@@ -17,7 +17,7 @@ For Ubuntu 14.04 dependencies are:
 
 ## Development setup
 
-`python setup.py develop` will install package using symlink to source code.
+`python setup.py develop` will install the package using a symlink to the source code.
 
 # Miracl API
 
@@ -25,11 +25,11 @@ For Ubuntu 14.04 dependencies are:
 
 ### Frontend
 
-Authorization flow depends on `mpad.js` browser library. To show login button:
+The authorization flow depends on the `mpad.js` browser library. To show the login button:
 
-* Put div with distinct ID where login button should be
-* Create authorization URL by using `get_login_url(handler)` server side
-* At the end of page body load `mpad.js` with parameters `data-authurl`
+* Insert a div with a distinct ID where the login button is to appear
+* Use `get_login_url(handler)` server side to generate the authorization URL
+* At the end of page body load `mpad.js` with the parameters `data-authurl`
 (authorization URL) and `data-element` (login button ID)
 
 ```
@@ -38,7 +38,7 @@ Authorization flow depends on `mpad.js` browser library. To show login button:
 
 ### MiraclMixin
 
-Contains all logic for authentication flow. Mixin uses `RequestHandler`
+Contains all logic for the authentication flow. Uses `RequestHandler`
 functionality for state preservation and request handling.
 
 Notable methods:
@@ -63,39 +63,33 @@ All settings are required for `MiraclMixin` to work correctly.
 
 ### MiraclAuthRequestHandler
 
-Inherits `MiraclMixin` and is default implementation of `RequestHandler` for
-authentification flow. It calls `perform_login_redirect` method internally.
-To start authentication flow, get authentication URL by using
-`get_login_url(handler)`. Returned URL should be used with `mpad.js` (see
-[Frontend](#markdown-header-frontend)). After user interaction
-method `on_auth_success` or `on_auth_failed` will be called.
-
-See settings, `on_auth_success` and `on_auth_failed` description of
-`MiraclMixin` for additional details.
+Inherits `MiraclMixin` and is the default implementation of `RequestHandler` for
+authentification flow. It calls the `perform_login_redirect` method internally.
+To start the authentication flow, obtain the authentication URL with
+`get_login_url(handler)`. The returned URL should then be used with `mpad.js` (see
+[Frontend](#markdown-header-frontend)). After user interaction with the login button, the
+methods `on_auth_success` or `on_auth_failed` will be called.
 
 ### Additional methods
 
 There are some helper methods that can be called from any RequestHandler:
 
-`is_authenticated` checks if token is saved in secure cookie.
+`is_authenticated` checks if token is saved in a secure cookie.
 
-`logout` clears token from cookie.
+`logout` clears token from the cookie.
 
 `refresh_user_data` clears user info and re-retrieves it from server. It can
 change authentification state if access token is expired. This is coroutine.
 
 `get_user_id` and `get_email` returns cached user information.
 
-`get_login_url` generates authorization URL for `mpad.js`
+`get_login_url` generates the authorization URL for `mpad.js`
 
 `set_issuer` sets issuer URL. It needs to be called before constructing
 handlers.
 
-## Samples
+## Sample App
 
-Configuration is located in `miracl.json`.
-
-Replace `CLIENT_ID`, `CLIENT_SECRET` and `REDIRECT_URI` with valid data from
-Miracl. Samples can be run after setup step is done.
+In the `samples` directory, `miracl.json` contains the app credentials config. Replace `CLIENT_ID`, `CLIENT_SECRET` and `REDIRECT_URI` with valid data for your app. The sample app can then be run.
 
 Redirect URI for this sample is `http://127.0.0.1:5000/c2id` if run locally.
