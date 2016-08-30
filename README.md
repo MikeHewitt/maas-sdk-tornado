@@ -1,4 +1,19 @@
-# Setup
+# maas-sdk-tornado
+
+[![Master Build Status](https://secure.travis-ci.org/miracl/maas-sdk-tornado.png?branch=master)](https://travis-ci.org/miracl/maas-sdk-tornado?branch=master)
+[![Master Coverage Status](https://coveralls.io/repos/miracl/maas-sdk-tornado/badge.svg?branch=master&service=github)](https://coveralls.io/github/miracl/maas-sdk-tornado?branch=master)
+
+* **category**:    SDK
+* **copyright**:   2016 MIRACL UK LTD
+* **license**:     ASL 2.0 - http://www.apache.org/licenses/LICENSE-2.0
+* **link**:        https://github.com/miracl/maas-sdk-tornado
+
+## Description
+
+Tornado version of the Software Development Kit (SDK) for MPin-As-A-Service (MAAS).
+
+
+## Setup
 
 Run `python setup.py` for setup. It uses python-setuptools.
 
