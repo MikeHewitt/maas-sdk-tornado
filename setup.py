@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from setuptools import setup
 
 setup(name='miracl_api_tornado',
@@ -13,8 +14,8 @@ setup(name='miracl_api_tornado',
           'future'  # https://github.com/rohe/pyoidc/issues/188
       ],
       tests_require=[
-            'mock==2.0.0',
-            'tornado-stub-client==0.2'
+          'mock==2.0.0',
+          'tornado-stub-client==0.2'
       ],
       test_suite='tests.test_suite',
       zip_safe=False)

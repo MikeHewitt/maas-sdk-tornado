@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import unittest
 from . import test_miracl_api_tornado
 
