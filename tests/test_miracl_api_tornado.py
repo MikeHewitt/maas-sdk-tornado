@@ -1,4 +1,8 @@
-import Cookie
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
+import http.cookies
 import json
 import unittest
 
@@ -15,6 +19,7 @@ from tornado_stub_client import stub, RequestCollection
 
 
 class AsyncHTTPStubClient(object):
+
     def fetch(self, request, callback=None, **kwargs):
         if not isinstance(request, HTTPRequest):
             request = HTTPRequest(url=request, **kwargs)
@@ -32,6 +37,7 @@ class AsyncHTTPStubClient(object):
 
 
 class AuthHandler(miracl_api_tornado.MiraclAuthRequestHandler):
+
     def on_auth_success(self, user_data):
         self.write("success")
 
@@ -40,6 +46,7 @@ class AuthHandler(miracl_api_tornado.MiraclAuthRequestHandler):
 
 
 class MainHandler(web.RequestHandler):
+
     def get(self):
         if miracl_api_tornado.is_authenticated(self):
             email = miracl_api_tornado.get_email(self)
@@ -50,12 +57,14 @@ class MainHandler(web.RequestHandler):
 
 
 class LogoutHandler(web.RequestHandler):
+
     def get(self):
         miracl_api_tornado.logout(self)
         self.write("logout")
 
 
 class RefreshHandler(web.RequestHandler):
+
     @gen.coroutine
     def get(self):
         yield miracl_api_tornado.refresh_user_data(self)
@@ -100,7 +109,8 @@ def get_app():
     return app
 
 
-class MockHandler:
+class MockHandler(object):
+
     def __init__(self):
         self.cookies = {}
         self.settings = settings
@@ -123,6 +133,7 @@ def get_mock_http(ignored=None):
 
 
 class TestBasics(AsyncTestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.mock_handler = MockHandler()
@@ -150,12 +161,13 @@ class TestBasics(AsyncTestCase):
 
 
 class TestAuthFlow(AsyncHTTPTestCase):
+
     @classmethod
     def setUpClass(cls):
-        cls.cookies = Cookie.SimpleCookie()
+        cls.cookies = http.cookies.SimpleCookie()
 
     def _clear_cookies(self):
-        self.cookies = Cookie.SimpleCookie()
+        self.cookies = http.cookies.SimpleCookie()
 
     def _update_cookies(self, headers):
         """
@@ -164,7 +176,7 @@ class TestAuthFlow(AsyncHTTPTestCase):
         """
         try:
             sc = headers.get_list('Set-Cookie')
-            self.cookies = Cookie.SimpleCookie()
+            self.cookies = http.cookies.SimpleCookie()
             for c in sc:
                 self.cookies.load(escape.native_str(c))
 
@@ -175,7 +187,7 @@ class TestAuthFlow(AsyncHTTPTestCase):
         if 'follow_redirects' not in kwargs:
             kwargs['follow_redirects'] = False
         header = {}
-        hs = self.cookies.output(sep="\r")
+        hs = self.cookies.output(sep=',')
         if hs != "":
             hs = hs.split(':', 1)[1]
             header['Cookie'] = hs
@@ -191,7 +203,7 @@ class TestAuthFlow(AsyncHTTPTestCase):
     def test_auth_callback(self):
         self._clear_cookies()  # clear session
         main = self.fetch("/")
-        split = main.body.split(",", 1)
+        split = main.body.decode().split(",", 1)
         self.assertEqual("login", split[0],
                          "After logout state should be login")
         params = url_to_dict(split[1])
@@ -213,11 +225,11 @@ class TestAuthFlow(AsyncHTTPTestCase):
                 auth_data = self.fetch(
                     "/c2id?state=" + state + "&code=" + code).body
 
-                self.assertEqual("success", auth_data, "Login success")
+                self.assertEqual(b"success", auth_data, "Login success")
         http_patch.stop()
 
         user_data = self.fetch("/")
-        user_data = user_data.body.split(",")
+        user_data = user_data.body.decode().split(",")
         self.assertEqual("authenticated", user_data[0])
         self.assertEqual("MOCK", user_data[1])
         self.assertEqual("MOCK@MOCK", user_data[2])

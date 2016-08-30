@@ -1,5 +1,6 @@
 # Compiled python modules.
-*.pyc
+**/*.pyc
+**/*.py.bak
 
 # Setuptools folders.
 /build/
@@ -11,3 +12,7 @@
 # Other files
 .cache/
 .eggs/
+
+target
+.coverage
+htmlcov

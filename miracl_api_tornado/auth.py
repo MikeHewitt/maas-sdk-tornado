@@ -1,5 +1,9 @@
 from __future__ import absolute_import, division, print_function, \
     with_statement
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 
 import base64
 import functools
@@ -12,11 +16,12 @@ from tornado.httputil import url_concat
 from .tornado_overrides import auth_return_future
 from .config import config
 from .messages import *
+from future.utils import with_metaclass
+from future.utils import bytes_to_native_str
 
-try:
-    import urllib.parse as urllib_parse  # py3
-except ImportError:
-    import urllib as urllib_parse  # py2
+import urllib.request
+import urllib.parse
+import urllib.error
 
 MIRACL_COOKIE_TOKEN_KEY = 'miracl_token'
 MIRACL_COOKIE_USERDATA_KEY = 'miracl_userdata'
@@ -44,16 +49,15 @@ def set_issuer(issuer):
 set_issuer(config["OAUTH_BASE_URL"])
 
 
-class MiraclMixin(OAuth2Mixin):
-    __metaclass__ = ABCMeta
-
+class MiraclMixin(with_metaclass(ABCMeta, OAuth2Mixin)):
     _OAUTH_AUTHORIZE_URL = OAUTH_AUTHORIZE_URL
     _OAUTH_ACCESS_TOKEN_URL = OAUTH_ACCESS_TOKEN_URL
     _OAUTH_USERINFO_URL = OAUTH_USERINFO_URL
 
     @gen.coroutine
     def perform_access_token_request(self):
-        state = self.get_secure_cookie(MIRACL_STATE_COOKIE)
+        state = self.get_secure_cookie(
+            MIRACL_STATE_COOKIE).decode('unicode_escape')
         current_state = self.get_argument('state')
         if current_state and state != current_state:
             self.on_auth_failed()
@@ -70,7 +74,7 @@ class MiraclMixin(OAuth2Mixin):
     @gen.coroutine
     def _get_authenticated_user(self, redirect_uri, code):
         http = self.get_auth_http_client()
-        body = urllib_parse.urlencode({
+        body = urllib.parse.urlencode({
             'redirect_uri': redirect_uri,
             'code': code,
             'client_id': self.settings[OAUTH_SETTINGS_KEY]['client_id'],
@@ -99,8 +103,14 @@ class MiraclMixin(OAuth2Mixin):
         pass
 
 
-class MiraclAuthRequestHandler(tornado.web.RequestHandler, MiraclMixin):
-    __metaclass__ = ABCMeta
+class MiraclAuthRequestHandler(
+    with_metaclass(
+        ABCMeta,
+        type(
+            bytes_to_native_str(b'NewBase'),
+            (tornado.web.RequestHandler,
+             MiraclMixin),
+            {}))):
 
     @gen.coroutine
     def get(self):
@@ -185,12 +195,12 @@ def _oauth2_request(handler, url, callback, access_token=None,
     all_args = {}
     all_args.update(args)
     if all_args:
-        url += "?" + urllib_parse.urlencode(all_args)
+        url += "?" + urllib.parse.urlencode(all_args)
     callback = functools.partial(_on_oauth2_request, callback)
     http = httpclient.AsyncHTTPClient()
     if post_args is not None:
         http.fetch(url, method="POST",
-                   body=urllib_parse.urlencode(post_args),
+                   body=urllib.parse.urlencode(post_args),
                    callback=callback,
                    headers={"Authorization": "Bearer " + access_token}
                    )

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import miracl_api_tornado as auth
 from tornado import web, ioloop, gen
 import json
@@ -70,6 +71,7 @@ class AuthHandler(auth.MiraclAuthRequestHandler):
     reporting auth status. All auth processing is done in M
     iraclAuthRequestHandler.
     """
+
     def on_auth_success(self, user_data):
         # Notify user about success
         flash_message(self, "success", "Successfully logged in!")
@@ -88,6 +90,7 @@ class MainHandler(web.RequestHandler):
     Default route handler - Displays user information for logged in user and
     login button for user not yet logged in
     """
+
     def get(self):
         if auth.is_authenticated(self):
             # If authenticated, render template with user data
@@ -106,6 +109,7 @@ class LogoutHandler(web.RequestHandler):
     Log out route handler - clears user data and auth info, notifies user about
     logout and redirects back to default route
     """
+
     def get(self):
         auth.logout(self)
         flash_message(self, "info", "User logged out!")
