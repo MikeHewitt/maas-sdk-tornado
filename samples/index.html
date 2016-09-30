@@ -76,8 +76,9 @@
         </div>
     {% end %}
     </div>
+    <!--Please refer to your distributor-specific documentation to find the correct url for the mpad.js script src-->
     {% if retry or not is_authorized %}
-        <script src="https://dd.cdn.mpin.io/mpad/mpad.js" data-authurl="{{ auth_url }}" data-element="btmpin"></script>
+        <script src="<<insert correct mpad url here>>" data-authurl="{{ auth_url }}" data-element="btmpin"></script>
     {% end %}
 </body>
 </html>
